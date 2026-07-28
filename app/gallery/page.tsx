@@ -24,13 +24,24 @@ export default async function GalleryPage() {
           Pico Lab
         </p>
 
-        <h1 className="mt-4 text-5xl font-black tracking-tight">
-          Galerie
-        </h1>
+       <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 className="text-5xl font-black tracking-tight">
+      Galerie
+    </h1>
 
-        <p className="mt-4 text-neutral-500">
-          Gefundene Bilder: {imageFiles.length}
-        </p>
+    <p className="mt-4 text-neutral-500">
+      Gefundene Bilder: {imageFiles.length}
+    </p>
+  </div>
+
+  <button
+    type="button"
+    className="rounded-full bg-neutral-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-neutral-700"
+  >
+    Foto hochladen
+  </button>
+</div>
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {imageFiles.map((file) => {
