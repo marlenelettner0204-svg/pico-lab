@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import UploadButton from "@/app/components/UploadButton";
 
 export default async function GalleryPage() {
   const { data: files, error } = await supabase.storage
@@ -35,12 +36,7 @@ export default async function GalleryPage() {
     </p>
   </div>
 
-  <button
-    type="button"
-    className="rounded-full bg-neutral-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-neutral-700"
-  >
-    Foto hochladen
-  </button>
+ <UploadButton />
 </div>
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

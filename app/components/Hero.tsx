@@ -6,7 +6,7 @@ export default function Hero() {
       </h1>
 
       <p className="mt-5 max-w-md text-center text-lg text-neutral-500">
-        Built to remember.
+        Keep what matters.
       </p>
     </>
   );
