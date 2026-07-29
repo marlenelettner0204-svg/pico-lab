@@ -2,6 +2,7 @@ import Hero from "./components/Hero";
 import EmptyState from "./components/EmptyState";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const { data: files } = await supabase.storage
