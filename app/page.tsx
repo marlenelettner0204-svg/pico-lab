@@ -1,5 +1,5 @@
 import Hero from "./components/Hero";
-import EmptyState from "./components/EmptyState";
+
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 export const dynamic = "force-dynamic";
@@ -8,6 +8,7 @@ export default async function Home() {
   const { data: files } = await supabase.storage
     .from("fotos")
     .list();
+console.log("Startseite Dateien:", files);
 
   const imageFiles =
     files?.filter((file) =>
@@ -27,7 +28,7 @@ export default async function Home() {
         Fotos entdecken
       </Link>
 
-      {!hasPhotos && <EmptyState />}
+    
     </main>
   );
 }
