@@ -1,10 +1,10 @@
 "use client";
 import { supabase } from "@/lib/supabase";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 export default function UploadButton() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
 
   function handleClick() {
     fileInputRef.current?.click();
@@ -31,9 +31,7 @@ export default function UploadButton() {
 
   alert("Upload erfolgreich!");
 }
-    const file = event.target.files?.[0] ?? null;
-    setSelectedFile(file);
-  }
+    
 
   return (
     <div className="flex flex-col items-start gap-3">
@@ -54,9 +52,7 @@ export default function UploadButton() {
         Datei auswählen
       </button>
 
-      <p className="text-sm text-neutral-500">
-        {selectedFile ? selectedFile.name : "Keine Datei ausgewählt"}
-      </p>
+     
     </div>
   );
 }
