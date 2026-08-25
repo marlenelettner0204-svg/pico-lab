@@ -19,9 +19,13 @@ export default async function SearchPage() {
     ) ?? [];
 
   const images = imageFiles.map((file) => {
-    const { data } = supabase.storage
+    const { data: originalData } = supabase.storage
       .from("fotos")
       .getPublicUrl(file.name);
+
+    const { data: thumbnailData } = supabase.storage
+      .from("fotos")
+      .getPublicUrl(`thumbnails/${file.name}.jpg`);
 
     const metadata = uploads?.find(
       (upload) => upload.file_name === file.name
@@ -29,7 +33,8 @@ export default async function SearchPage() {
 
     return {
       fileName: file.name,
-      publicUrl: data.publicUrl,
+      publicUrl: originalData.publicUrl,
+      thumbnailUrl: thumbnailData.publicUrl,
       metadata,
     };
   });

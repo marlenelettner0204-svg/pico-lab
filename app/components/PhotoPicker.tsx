@@ -5,7 +5,48 @@ import { supabase } from "@/lib/supabase";
 
 const PARALLEL_UPLOADS = 4;
 const MAX_RETRIES = 2;
+async function createThumbnail(file: File): Promise<Blob> {
+  const imageBitmap = await createImageBitmap(file);
 
+  const maxSize = 900;
+
+  const scale = Math.min(
+    maxSize / imageBitmap.width,
+    maxSize / imageBitmap.height,
+    1
+  );
+
+  const width = Math.round(imageBitmap.width * scale);
+  const height = Math.round(imageBitmap.height * scale);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Thumbnail konnte nicht erstellt werden.");
+  }
+
+  context.drawImage(imageBitmap, 0, 0, width, height);
+
+  imageBitmap.close();
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error("Thumbnail konnte nicht erstellt werden."));
+        }
+      },
+      "image/jpeg",
+      0.82
+    );
+  });
+}
 type UploadResult =
   | {
       success: true;
@@ -78,12 +119,30 @@ export default function PhotoPicker() {
 
     try {
       await uploadToStorage(file, fileName);
+console.log("THUMBNAIL START:", file.name);
+const thumbnail = await createThumbnail(file);
+console.log("THUMBNAIL CREATED:", thumbnail.size, "bytes");
+const thumbnailName = `thumbnails/${fileName}.jpg`;
 
-      return {
-        success: true,
-        file,
-        fileName,
-      };
+const { error: thumbnailError } = await supabase.storage
+  .from("fotos")
+  .upload(thumbnailName, thumbnail, {
+    contentType: "image/jpeg",
+    cacheControl: "3600",
+    upsert: false,
+  });
+
+if (thumbnailError) {
+  console.error(
+    `${file.name}: Thumbnail konnte nicht hochgeladen werden – ${thumbnailError.message}`
+  );
+}
+
+return {
+  success: true,
+  file,
+  fileName,
+};
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unbekannter Fehler";

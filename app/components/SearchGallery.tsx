@@ -14,6 +14,7 @@ type UploadMeta = {
 type SearchImage = {
   fileName: string;
   publicUrl: string;
+  thumbnailUrl: string;
   metadata?: UploadMeta;
 };
 
@@ -129,10 +130,13 @@ export default function SearchGallery({
 
     const fileNames = Array.from(selectedFileNames);
 
-    const { error: storageError } = await supabase.storage
-      .from("fotos")
-      .remove(fileNames);
+    const thumbnailNames = fileNames.map(
+  (fileName) => `thumbnails/${fileName}.jpg`
+);
 
+const { error: storageError } = await supabase.storage
+  .from("fotos")
+  .remove([...fileNames, ...thumbnailNames]);
     if (storageError) {
       console.error(storageError);
 
@@ -260,16 +264,14 @@ export default function SearchGallery({
                     : "hover:-translate-y-1 hover:shadow-lg"
                 }`}
               >
-                <img
-                  src={image.publicUrl}
-                  alt={image.fileName}
-                  draggable={false}
-                  className={`aspect-[4/5] w-full object-cover transition duration-300 ${
-                    isSelected
-                      ? "scale-[0.97] opacity-80"
-                      : "group-hover:scale-[1.02]"
-                  }`}
-                />
+              <img
+  src={image.thumbnailUrl}
+  alt={image.fileName}
+  loading="eager"
+  decoding="async"
+  fetchPriority="high"
+  className="aspect-[4/5] w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+/>
 
                 {isSelected && (
                   <div className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-sm font-bold text-white shadow">
