@@ -245,7 +245,7 @@ const { error: storageError } = await supabase.storage
           {filteredImages.length === 1 ? "Bild" : "Bilder"}
         </p>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+       <div className="columns-2 gap-3 sm:columns-3 lg:columns-4">
           {filteredImages.map((image) => {
             const isSelected = selectedFileNames.has(image.fileName);
 
@@ -258,7 +258,7 @@ const { error: storageError } = await supabase.storage
                 onTouchEnd={cancelLongPress}
                 onTouchCancel={cancelLongPress}
                 onTouchMove={cancelLongPress}
-                className={`group relative overflow-hidden rounded-3xl bg-white text-left shadow-sm transition ${
+                className={`group relative mb-3 w-full break-inside-avoid overflow-hidden rounded-3xl bg-white text-left shadow-sm transition ${
                   isSelected
                     ? "ring-4 ring-neutral-900"
                     : "hover:-translate-y-1 hover:shadow-lg"
@@ -270,8 +270,7 @@ const { error: storageError } = await supabase.storage
   loading="eager"
   decoding="async"
   fetchPriority="high"
-  className="aspect-[4/5] w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-/>
+className="h-auto w-full object-cover transition duration-300 group-hover:scale-[1.02]"/>
 
                 {isSelected && (
                   <div className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-sm font-bold text-white shadow">
