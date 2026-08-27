@@ -1,6 +1,6 @@
 "use client";
-
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 const PARALLEL_UPLOADS = 4;
@@ -74,6 +74,8 @@ export default function PhotoPicker() {
 
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
+  const [uploadSuccessful, setUploadSuccessful] = useState(false);
+const [successfulUploadCount, setSuccessfulUploadCount] = useState(0);
 
   const [completedUploads, setCompletedUploads] = useState(0);
   const [totalUploads, setTotalUploads] = useState(0);
@@ -85,8 +87,9 @@ export default function PhotoPicker() {
     setUploadMessage("");
     setCompletedUploads(0);
     setTotalUploads(0);
-  }
-
+ setUploadSuccessful(false);
+setSuccessfulUploadCount(0);
+ }
   async function uploadToStorage(file: File, fileName: string) {
     let lastError = "";
 
@@ -279,14 +282,12 @@ return {
     setUploading(false);
 
     if (failedUploads.length === 0) {
-      setUploadMessage(
-        successfulUploads.length === 1
-          ? "Foto erfolgreich hochgeladen."
-          : `${successfulUploads.length} Fotos erfolgreich hochgeladen.`
-      );
+  setSuccessfulUploadCount(successfulUploads.length);
+  setUploadSuccessful(true);
+  setUploadMessage("");
 
-      return;
-    }
+  return;
+}
 
     setUploadMessage(
       `${successfulUploads.length} von ${filesToUpload.length} Fotos erfolgreich hochgeladen. ` +
@@ -335,7 +336,46 @@ return {
           {uploadMessage}
         </p>
       )}
+{uploadSuccessful && (
+  <div className="mt-10 flex flex-col items-center rounded-3xl bg-white px-6 py-10 text-center shadow-sm">
+<div className="success-check-circle">
+  <svg
+    viewBox="0 0 52 52"
+    className="success-check-svg"
+    aria-hidden="true"
+  >
+    <circle
+      cx="26"
+      cy="26"
+      r="24"
+      className="success-check-circle-line"
+    />
 
+    <path
+      d="M15 27 L23 35 L38 18"
+      className="success-check-path"
+    />
+  </svg>
+</div>
+
+    <h2 className="mt-6 text-2xl font-bold tracking-tight">
+      Upload successful
+    </h2>
+
+    <p className="mt-2 text-sm text-neutral-500">
+      {successfulUploadCount === 1
+        ? "1 photo has been added to Pico."
+        : `${successfulUploadCount} photos have been added to Pico.`}
+    </p>
+
+    <Link
+      href="/search"
+      className="mt-7 rounded-full bg-neutral-900 px-7 py-3 text-sm font-semibold text-white transition hover:bg-neutral-700"
+    >
+      View Gallery
+    </Link>
+  </div>
+)}
       {files.length > 0 && (
         <div className="mt-10">
           <p className="mb-4 text-sm text-neutral-500">

@@ -30,6 +30,8 @@ export default function SearchGallery({
 
   const [selectedImage, setSelectedImage] =
     useState<SearchImage | null>(null);
+    const [exportMenuOpen, setExportMenuOpen] = useState(false);
+const [exporting, setExporting] = useState(false);
 
   const [selectedFileNames, setSelectedFileNames] = useState<Set<string>>(
     new Set()
@@ -189,7 +191,83 @@ const { error: storageError } = await supabase.storage
         : `${deletedCount} Fotos gelöscht.`
     );
   }
+async function getOriginalFile(image: SearchImage) {
+  const response = await fetch(image.publicUrl);
 
+  if (!response.ok) {
+    throw new Error("Bild konnte nicht geladen werden.");
+  }
+
+  const blob = await response.blob();
+
+  return new File([blob], image.fileName, {
+    type: blob.type || "image/jpeg",
+  });
+}
+
+async function downloadSelectedImage() {
+  if (!selectedImage || exporting) return;
+
+  try {
+    setExporting(true);
+
+    const file = await getOriginalFile(selectedImage);
+    const url = URL.createObjectURL(file);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = selectedImage.fileName;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
+    setExportMenuOpen(false);
+  } catch (error) {
+    console.error(error);
+    alert("Download konnte nicht gestartet werden.");
+  } finally {
+    setExporting(false);
+  }
+}
+
+async function shareSelectedImage() {
+  if (!selectedImage || exporting) return;
+
+  try {
+    setExporting(true);
+
+    const file = await getOriginalFile(selectedImage);
+
+    if (
+      navigator.share &&
+      (!navigator.canShare || navigator.canShare({ files: [file] }))
+    ) {
+      await navigator.share({
+        files: [file],
+        title: "Pico",
+      });
+
+      setExportMenuOpen(false);
+      return;
+    }
+
+    alert("Teilen wird auf diesem Gerät nicht unterstützt.");
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.name === "AbortError"
+    ) {
+      return;
+    }
+
+    console.error(error);
+    alert("Das Bild konnte nicht geteilt werden.");
+  } finally {
+    setExporting(false);
+  }
+}
   return (
     <>
       <div className="mt-10">
@@ -375,7 +453,37 @@ className="h-auto w-full object-cover transition duration-300 group-hover:scale-
                       </p>
                     )}
                 </div>
+<div className="relative mb-4">
+  <button
+    type="button"
+    onClick={() => setExportMenuOpen((open) => !open)}
+    className="w-full rounded-full bg-neutral-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-neutral-700"
+  >
+    Export
+  </button>
 
+  {exportMenuOpen && (
+    <div className="absolute bottom-full left-0 z-20 mb-2 w-full overflow-hidden rounded-2xl border border-neutral-200 bg-white p-2 shadow-xl">
+      <button
+        type="button"
+        onClick={downloadSelectedImage}
+        disabled={exporting}
+        className="w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition hover:bg-neutral-100 disabled:opacity-50"
+      >
+        Download
+      </button>
+
+      <button
+        type="button"
+        onClick={shareSelectedImage}
+        disabled={exporting}
+        className="w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition hover:bg-neutral-100 disabled:opacity-50"
+      >
+        Share
+      </button>
+    </div>
+  )}
+</div>
                 <div className="mt-10 border-t border-neutral-200 pt-6">
                   <button
                     type="button"
