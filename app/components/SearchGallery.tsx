@@ -1,6 +1,5 @@
 "use client";
-
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type UploadMeta = {
@@ -32,7 +31,14 @@ export default function SearchGallery({
     useState<SearchImage | null>(null);
     const [exportMenuOpen, setExportMenuOpen] = useState(false);
 const [exporting, setExporting] = useState(false);
+const [isMobile, setIsMobile] = useState(false);
 
+useEffect(() => {
+  const mobileDevice =
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  setIsMobile(mobileDevice);
+}, []);
   const [selectedFileNames, setSelectedFileNames] = useState<Set<string>>(
     new Set()
   );
@@ -464,14 +470,16 @@ className="h-auto w-full object-cover transition duration-300 group-hover:scale-
 
   {exportMenuOpen && (
     <div className="absolute bottom-full left-0 z-20 mb-2 w-full overflow-hidden rounded-2xl border border-neutral-200 bg-white p-2 shadow-xl">
-      <button
-        type="button"
-        onClick={downloadSelectedImage}
-        disabled={exporting}
-        className="w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition hover:bg-neutral-100 disabled:opacity-50"
-      >
-        Download
-      </button>
+      {!isMobile && (
+  <button
+    type="button"
+    onClick={downloadSelectedImage}
+    disabled={exporting}
+    className="w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition hover:bg-neutral-100 disabled:opacity-50"
+  >
+    Download
+  </button>
+)}
 
       <button
         type="button"
