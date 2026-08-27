@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import JSZip from "jszip";
 import { supabase } from "@/lib/supabase";
 
 type UploadMeta = {
@@ -31,13 +32,19 @@ export default function SearchGallery({
     useState<SearchImage | null>(null);
     const [exportMenuOpen, setExportMenuOpen] = useState(false);
 const [exporting, setExporting] = useState(false);
-const [isMobile, setIsMobile] = useState(false);
+const [isMobileDevice, setIsMobileDevice] = useState(false);
 
 useEffect(() => {
-  const mobileDevice =
-    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const userAgent = navigator.userAgent;
 
-  setIsMobile(mobileDevice);
+  const isIOS =
+    /iPhone|iPad|iPod/i.test(userAgent) ||
+    (navigator.platform === "MacIntel" &&
+      navigator.maxTouchPoints > 1);
+
+  const isAndroid = /Android/i.test(userAgent);
+
+  setIsMobileDevice(isIOS || isAndroid);
 }, []);
   const [selectedFileNames, setSelectedFileNames] = useState<Set<string>>(
     new Set()
@@ -212,6 +219,11 @@ async function getOriginalFile(image: SearchImage) {
 }
 
 async function downloadSelectedImage() {
+    const confirmed = window.confirm(
+  `Download "${selectedImage?.fileName}"?`
+);
+
+if (!confirmed) return;
   if (!selectedImage || exporting) return;
 
   try {
@@ -274,6 +286,150 @@ async function shareSelectedImage() {
     setExporting(false);
   }
 }
+async function shareSelectedImages() {
+  if (selectedFileNames.size === 0 || exporting) return;
+
+  try {
+    setExporting(true);
+
+    const imagesToShare = libraryImages.filter((image) =>
+      selectedFileNames.has(image.fileName)
+    );
+
+    const files = await Promise.all(
+      imagesToShare.map((image) => getOriginalFile(image))
+    );
+
+    if (
+      navigator.share &&
+      (!navigator.canShare || navigator.canShare({ files }))
+    ) {
+      await navigator.share({
+        files,
+        title: "Pico",
+      });
+
+      return;
+    }
+async function downloadSelectedImages() { const confirmed = window.confirm(
+  `Download ${selectedFileNames.size} photo${selectedFileNames.size === 1 ? "" : "s"}?`
+);
+
+if (!confirmed) return;
+  if (
+    selectedFileNames.size === 0 ||
+    exporting ||
+    isMobileDevice
+  ) {
+    return;
+  }
+
+  try {
+    setExporting(true);
+
+    const imagesToDownload = libraryImages.filter((image) =>
+      selectedFileNames.has(image.fileName)
+    );
+
+    const zip = new JSZip();
+
+    const files = await Promise.all(
+      imagesToDownload.map(async (image) => {
+        const file = await getOriginalFile(image);
+
+        return {
+          fileName: image.fileName,
+          file,
+        };
+      })
+    );
+
+    for (const { fileName, file } of files) {
+      zip.file(fileName, file);
+    }
+
+    const zipBlob = await zip.generateAsync({
+      type: "blob",
+    });
+
+    const url = URL.createObjectURL(zipBlob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "pico-photos.zip";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error(error);
+    alert("Die Bilder konnten nicht heruntergeladen werden.");
+  } finally {
+    setExporting(false);
+  }
+}
+
+    alert("Diese Bilder können auf diesem Gerät nicht geteilt werden.");
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return;
+    }
+
+    console.error(error);
+    alert("Die Bilder konnten nicht geteilt werden.");
+  } finally {
+    setExporting(false);
+  }
+}
+async function downloadSelectedImages() {
+  if (selectedFileNames.size === 0 || exporting || isMobileDevice) return;
+
+  try {
+    setExporting(true);
+
+    const imagesToDownload = libraryImages.filter((image) =>
+      selectedFileNames.has(image.fileName)
+    );
+
+    const zip = new JSZip();
+
+    const files = await Promise.all(
+      imagesToDownload.map(async (image) => {
+        const file = await getOriginalFile(image);
+
+        return {
+          fileName: image.fileName,
+          file,
+        };
+      })
+    );
+
+    for (const { fileName, file } of files) {
+      zip.file(fileName, file);
+    }
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(zipBlob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "pico-photos.zip";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error(error);
+    alert("Die Bilder konnten nicht heruntergeladen werden.");
+  } finally {
+    setExporting(false);
+  }
+}
+
   return (
     <>
       <div className="mt-10">
@@ -304,7 +460,32 @@ async function shareSelectedImage() {
             >
               Cancel
             </button>
+            {!isMobileDevice && (
+  <button
+    type="button"
+    onClick={() => {
+  const confirmed = window.confirm(
+    `Download ${selectedFileNames.size} photo${selectedFileNames.size === 1 ? "" : "s"}?`
+  );
 
+  if (confirmed) {
+    downloadSelectedImages();
+  }
+}}
+    disabled={exporting}
+    className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-200 disabled:opacity-50"
+  >
+    {exporting ? "Preparing..." : "Download"}
+  </button>
+)}
+<button
+  type="button"
+  onClick={shareSelectedImages}
+  disabled={exporting}
+  className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-200 disabled:opacity-50"
+>
+  {exporting ? "Preparing..." : "Share"}
+</button>
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
@@ -470,7 +651,7 @@ className="h-auto w-full object-cover transition duration-300 group-hover:scale-
 
   {exportMenuOpen && (
     <div className="absolute bottom-full left-0 z-20 mb-2 w-full overflow-hidden rounded-2xl border border-neutral-200 bg-white p-2 shadow-xl">
-      {!isMobile && (
+      {!isMobileDevice && (
   <button
     type="button"
     onClick={downloadSelectedImage}
@@ -480,7 +661,6 @@ className="h-auto w-full object-cover transition duration-300 group-hover:scale-
     Download
   </button>
 )}
-
       <button
         type="button"
         onClick={shareSelectedImage}
